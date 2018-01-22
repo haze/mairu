@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"time"
+	"math"
 )
 
 func s(a string) *string {
@@ -12,5 +14,6 @@ func s(a string) *string {
 // PongRoute ...
 func PongRoute(event eventInfo) (bool, *string) {
 	sent, _ := event.message.Timestamp.Parse()
-	return false, s(fmt.Sprintf("%fs", sent.Sub(event.received).Seconds()))
+	elapsed := math.Abs(float64(time.Since(sent) / time.Millisecond))
+	return false, s(fmt.Sprintf("%vms", elapsed))
 }

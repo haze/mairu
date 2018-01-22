@@ -82,7 +82,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	eventEmitter.Use("message", emitter.Void)
 	eventEmitter.On("message", func(ev *emitter.Event) {
 		route(ev)
 	})
