@@ -13,6 +13,11 @@ import (
 	"github.com/olebedev/emitter"
 )
 
+type commandInfo struct {
+	Master string
+	Slave  []string
+}
+
 type eventInfo struct {
 	sesh      *discordgo.Session
 	message   *discordgo.MessageCreate
@@ -31,10 +36,16 @@ var eventEmitter *emitter.Emitter
 var commandRegex *regexp.Regexp
 var gSettings *settings
 var gConfig *Config
+var gRegistry []*commandInfo
+
+func pushCommand(f func(eventInfo) (bool, *string), name string, aliases ...string) {
+	commands[name] = f
+	gRegistry = append(gRegistry, &commandInfo{Master: name, Slave: aliases})
+}
 
 func registerCommands() {
-	commands["ping"] = PongRoute
-	commands["?"] = WolframRoute
+	pushCommand(PongRoute, "ping", ";p")
+	pushCommand(WolframRoute, "?", "?+")
 }
 
 func init() {
@@ -57,14 +68,29 @@ func init() {
 	registerCommands()
 }
 
+func searchForCommand(s string) func(eventInfo) (bool, *string) {
+	if val, ok := commands[s]; ok {
+		return val
+	}
+	for _, v := range gRegistry {
+		for _, z := range v.Slave {
+			if strings.ToLower(z) == s {
+				return commands[v.Master]
+			}
+		}
+	}
+	return nil
+}
+
 func route(event *emitter.Event) {
 	inf := event.Args[0].(eventInfo)
 	message := inf.message.Message.Content
 	matches := commandRegex.FindAllString(message, -1)
-	inf.arguments = matches[1:]
+	inf.arguments = matches
 	prefix := strings.ToLower(matches[0])
-	if val, ok := commands[prefix]; ok {
-		delete, resp := val(inf)
+	f := searchForCommand(prefix)
+	if f != nil {
+		delete, resp := f(inf)
 		if delete {
 			inf.sesh.ChannelMessageDelete(inf.message.ChannelID, inf.message.ID)
 			if resp != nil {
@@ -90,7 +116,7 @@ func main() {
 
 	eventEmitter.Use("message", emitter.Void)
 	eventEmitter.On("message", func(ev *emitter.Event) {
-		route(ev)
+		go route(ev)
 	})
 
 	// Register our shizz.
