@@ -46,6 +46,7 @@ func pushCommand(f func(eventInfo) (bool, *string), name string, aliases ...stri
 func registerCommands() {
 	pushCommand(PongRoute, "ping", ";p")
 	pushCommand(WolframRoute, "?", "?+")
+	pushCommand(StatusRoute, "status", "==")
 }
 
 func init() {

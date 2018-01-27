@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"haze.sh/mairu/api"
-	"haze.sh/mairu/util"
+	game "haze.sh/mairu/gutil"
+	str "haze.sh/mairu/strutil"
 )
 
 // WolframRoute ...
@@ -37,4 +38,26 @@ func PongRoute(event eventInfo) (bool, *string) {
 	sent, _ := event.message.Timestamp.Parse()
 	elapsed := math.Abs(float64(time.Since(sent) / time.Millisecond))
 	return false, str.S(fmt.Sprintf("%vms", elapsed))
+}
+
+// StatusRoute ...
+func StatusRoute(event eventInfo) (bool, *string) {
+	args := event.arguments
+	name := strings.Join(event.arguments[1:], " ")
+	dg := event.sesh
+	switch strings.ToLower(args[1]) {
+	case "g":
+	case "game":
+		dg.UpdateStatus(0, name)
+	case "listening":
+	case "l":
+		game.UpdateStatusSpecial(dg, false, name, game.TypeListening)
+	case "streaming":
+	case "s":
+		dg.UpdateStreamingStatus(0, strings.Join(args[3:], " "), args[2])
+	case "watching":
+	case "w":
+		game.UpdateStatusSpecial(dg, false, name, game.TypeWatching)
+	}
+	return true, nil
 }

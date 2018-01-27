@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 
-	"haze.sh/mairu/util"
+	str "haze.sh/mairu/strutil"
 )
 
 const simpleWolframGateway = "http://api.wolframalpha.com/v1/result?appid=%s&i=%s"
